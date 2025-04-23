@@ -1,0 +1,27 @@
+services:
+  web:
+    build: ./timetracker
+    volumes:
+      - ./timetracker:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgres://postgres:Mztskopje97*@db:5432/tracker
+    restart: always
+
+  db:
+    image: postgres:14
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=tracker
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Mztskopje97*
+    ports:
+      - "5432:5432"
+    restart: always
+
+volumes:
+  postgres_data:

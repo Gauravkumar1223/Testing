@@ -1,24 +1,24 @@
-# Dockerfile
-
-# Use official Python image
 FROM python:3.11
 
-# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Set work directory
 WORKDIR /app
 
-# Install dependencies
 COPY requirements.txt /app/
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copy project files
 COPY . /app/
 
-# Expose the port
+# Make sure the entrypoint script has proper permissions
+COPY entrypoint.sh /app/
+RUN chmod +x /app/entrypoint.sh
+# Ensure the script has Unix line endings
+RUN sed -i 's/\r$//' /app/entrypoint.sh
+
 EXPOSE 8000
 
-# Default command
+# Use shell form instead of exec form for the entrypoint
+ENTRYPOINT ["/bin/bash", "/app/entrypoint.sh"]
+
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

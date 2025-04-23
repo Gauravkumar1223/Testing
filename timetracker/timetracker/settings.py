@@ -82,7 +82,7 @@ DATABASES = {
         'USER': 'postgres',
         'PASSWORD': 'Mztskopje97*',
         'HOST': 'db',  # Or the hostname where your PostgreSQL server is running
-        'PORT': '5432',       # Default PostgreSQL port
+        'PORT': '5432', # Default PostgreSQL port
     }
 }
 
