@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 400px;">
+    <h2 class="text-center mb-4">Login</h2>
+    
+   
+    {% if messages %}
+      {% for message in messages %}
+      <div class="alert 
+      {% if message.tags == 'error' %}alert-danger
+      {% elif message.tags == 'success' %}alert-success
+      {% elif message.tags == 'warning' %}alert-warning
+      {% elif message.tags == 'info' %}alert-info
+      {% else %}alert-secondary
+      {% endif %}
+      alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+      {% endfor %}
+    {% endif %}
+  
+    
+    <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" name="username" class="form-control" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary w-100">Login</button>
+        <div class="text-center mt-3">
+            <a href="{% url 'forgot_password' %}">Forgot Password?</a>
+        </div>
+        
+    </form>
+</div>
+{% endblock %}

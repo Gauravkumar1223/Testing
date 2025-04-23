@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load app_filters %}
+
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center">Time Tracker</h1>
+    
+    <div class="calendar-navigation d-flex justify-content-between align-items-center mb-4 flex-wrap">
+    
+        <!-- Old Vacation Days - Left -->
+        <div class="card text-center shadow-sm mb-2" style="width: 260px;">
+            <div class="card-header bg-vacation text-black">
+                <h6 class="mb-0">Old Vacation Days Left</h6>
+            </div>
+            <div class="card-body">
+                <h3 class="card-title mb-0 text-warning-emphasis">{{ request.user.vacation_days_old }} Days</h3>
+            </div>
+        </div>
+    
+        <!-- Month Navigation - Center -->
+        <div class="d-flex align-items-center justify-content-center mb-2">
+            <a href="?year={{ prev_month_year }}&month={{ prev_month }}" class="btn btn-outline-primary mx-2">
+                <i class="fas fa-arrow-left"></i> Previous
+            </a>
+            <span class="fw-semibold fs-5 mx-3">{{ year }} - {{ month_name }}</span>
+            <a href="?year={{ next_month_year }}&month={{ next_month }}" class="btn btn-outline-primary mx-2">
+                Next <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    
+        <!-- New Vacation Days - Right -->
+        <div class="card text-center shadow-sm mb-2" style="width: 260px;">
+            <div class="card-header bg-vacation text-black">
+                <h6 class="mb-0">Vacation Days Left</h6>
+            </div>
+            <div class="card-body">
+                <h3 class="card-title mb-0 text-success-emphasis">{{ request.user.vacation_days }} Days</h3>
+            </div>
+        </div>
+    </div>
+    
+    
+    
+    <!-- Calendar -->
+    <div class="calendar">
+        <div class="row calendar-header">
+            <div class="col">Monday</div>
+            <div class="col">Tuesday</div>
+            <div class="col">Wednesday</div>
+            <div class="col">Thursday</div>
+            <div class="col">Friday</div>
+            <div class="col">Saturday</div>
+            <div class="col">Sunday</div>
+        </div>
+        
+        <!-- Loop through the weeks of the month -->
+        {% for week in month_weeks %}
+        <div class="row calendar-dates">
+            {% for day in week %}
+            <div class="col {% if not day %}empty{% endif %}" data-date="{{ day|date:'Y-m-d' }}">
+                {% if day %}
+                    <div class="day-number" data-date="{{ day|date:'Y-m-d' }}">
+                        {{ day|date:"d" }}
+                    </div>
+                    {% with entry=time_entries|get_item:day %}
+                    {% if entry %}
+                        <div class="day-type {{ entry.day_type }}">{{ entry.get_day_type_display }}</div>
+                        <div class="hours">{{ entry.hours }} hrs</div>
+                        <div class="description">{{ entry.description|truncatechars:20 }}</div>
+                    {% else %}
+                        <div class="no-entry">No entry</div>
+                    {% endif %}
+                    {% endwith %}
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    
+</div>
+
+<!-- Modal for editing entries -->
+<div class="modal fade" id="entryModal" tabindex="-1" aria-labelledby="entryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="entryModalLabel">Time Entry</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="entryForm">
+                    <input type="hidden" id="entry-date" name="date">
+                    
+                    <div class="mb-3">
+                        <label for="day-type" class="form-label">Day Type</label>
+                        <select class="form-select" id="day-type" name="day_type">
+                            <option value="work">Working Day</option>
+                            <option value="holiday">Holiday</option>
+                            <option value="sick">Sick Day</option>
+                            <option value="vacation">Vacation</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="hours-input" class="form-label">Hours</label>
+                        <input type="number" class="form-control" id="hours-input" name="hours" step="0.5" min="0" max="24">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description-input" class="form-label">Description</label>
+                        <textarea class="form-control" id="description-input" name="description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-entry">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Button for auto populating the monthly working days -->
+<div class="text-center mt-5">
+    <form method="post" action="{% url 'auto_fill' %}" class="mt-4">
+        {% csrf_token %}
+        <input type="hidden" name="year" value="{{ year }}">
+        <input type="hidden" name="month" value="{{ month }}">
+        <button type="submit" class="btn btn-primary">Auto Fill</button>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+   $(document).ready(function() {
+    // Handle day click to open modal
+    $('.day-number').on('click', function() {
+        const date = new Date($(this).data('date'));
+        const today = new Date();
+
+        // Get the start of this month and previous full month
+        const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        const previousMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+
+        // If clicked date is before the start of last full month, block interaction
+        if (date < previousMonthStart) {
+            alert("Editing is only allowed for the current and previous month.");
+            return;
+        }
+
+        // Proceed with normal logic
+        const hours = $(this).siblings('.hours').text().replace(' hrs', '').trim() || 0;
+        const description = $(this).siblings('.description').text() || '';
+        const dayType = $(this).siblings('.day-type').attr('class')?.split(' ').pop() || 'work';
+
+        $('#entry-date').val($(this).data('date'));
+        $('#hours-input').val(hours);
+        $('#description-input').val(description);
+        $('#day-type').val(dayType);
+
+        $('#entryModalLabel').text('Time Entry for ' + formatDate($(this).data('date')));
+        $('#entryModal').modal('show');
+    });
+
+    // Handle save button click
+    $('#save-entry').on('click', function() {
+        const formData = {
+            'date': $('#entry-date').val(),
+            'hours': $('#hours-input').val(),
+            'description': $('#description-input').val(),
+            'day_type': $('#day-type').val(),
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        };
+
+        if ($('#day-type').val() === 'work') {
+            if ($('#hours-input').val() <= 0) {
+                alert('You must enter hours greater than 0 for a work day!');
+                return;
+            }
+        } else {
+            if ($('#hours-input').val() > 0) {
+                alert('You can\'t enter hours for a non-working day!');
+                return;
+            }
+        }
+
+        $.ajax({
+            url: '{% url "ajax_update_entry" %}',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.status === 'success') {
+                    $('#entryModal').modal('hide');
+                    location.reload();
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error saving entry:', error);
+                alert('Failed to save entry. Please try again.');
+            }
+        });
+    });
+
+    // Helper function to format date nicely
+    function formatDate(dateString) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', options);
+    }
+});
+
+</script>
+{% endblock %}

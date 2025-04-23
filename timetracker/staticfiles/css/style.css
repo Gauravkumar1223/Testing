@@ -1,0 +1,131 @@
+body {
+    background-color: #ffeeba !important;
+}
+
+
+.calendar {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.auto-fill-container {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 10;
+}
+
+
+.calendar-header {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.calendar-dates {
+    text-align: center;
+    font-weight: bold;
+    padding: 5px 0;
+    background-color: #e9ecef;
+    border-bottom: 1px solid #ddd;
+}
+
+.calendar-entries .col {
+    border-right: 1px solid #ddd;
+    padding: 10px;
+    min-height: 120px;
+}
+
+.calendar-entries .col:last-child {
+    border-right: none;
+}
+
+.calendar-day {
+    position: relative;
+}
+
+.day-type {
+    margin-bottom: 5px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.day-type.work {
+    background-color: #d4edda;
+}
+
+.day-type.holiday {
+    background-color: #cce5ff;
+}
+
+.day-type.sick {
+    background-color: #f8d7da;
+}
+
+.day-type.vacation {
+    background-color: #fff3cd;
+}
+
+.hours {
+    font-weight: bold;
+}
+
+.description {
+    font-size: 0.9em;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+.no-entry {
+    color: #adb5bd;
+    font-style: italic;
+}
+
+.edit-entry {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+}
+
+.day-number {
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.day-number:hover {
+    background-color: #f8d4aa;
+}
+
+.mx-3 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #007bff; 
+}
+
+.mx-3:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.5); 
+}
+
+.vacationbox {
+    background-color: #e7f3ff; /* light blue to match holiday theme */
+    border: 1px solid #0d6efd;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 350px;
+    margin: 0 auto 30px auto;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+
+
+
+

@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load app_filters %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4 text-center">User Management</h2>
+   <!-- Month Navigation Buttons -->
+<div class="d-flex justify-content-center mb-4">
+    <a href="?year={{ prev_month_year }}&month={{ prev_month }}" class="btn btn-outline-primary mx-2">
+        <i class="fas fa-arrow-left"></i> Previous Month
+    </a>
+    <span class="mx-3 fw-bold fs-5">{{ year }} - {{ month_name }}</span>
+    <a href="?year={{ next_month_year }}&month={{ next_month }}" class="btn btn-outline-primary mx-2">
+        Next Month <i class="fas fa-arrow-right"></i>
+    </a>
+</div>
+
+
+
+    <button class="btn btn-success mb-3" onclick="addNewRow()">+ Add User</button>
+    <form method="post" id="user-form">
+        {% csrf_token %}
+        <table class="table table-bordered table-striped text-center" id="user-table">
+            <thead class="table-dark">
+                <tr>
+                    <th>First Name</th><th>Last Name</th><th>Username</th><th>Email</th>
+                    <th>Position</th><th>Team Lead</th><th>Project Manager</th>
+                    <th>Project</th><th>Vacation Days</th>
+                    <th>Actions</th><th>Export</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr data-id="{{ user.id }}">
+                    <td contenteditable="true">{{ user.first_name }}</td>
+                    <td contenteditable="true">{{ user.last_name }}</td>
+                    <td contenteditable="true">{{ user.username }}</td>
+                    <td contenteditable="true">{{ user.email }}</td>
+                    <td contenteditable="true">{{ user.position }}</td>
+                    <td contenteditable="true">{{ user.team_lead }}</td>
+                    <td contenteditable="true">{{ user.project_manager }}</td>
+                    <td contenteditable="true">{{ user.project }}</td>
+                    <td contenteditable="true">{{ user.vacation_days }}</td>
+                    <td><button type="button" class="btn btn-primary" onclick="saveRow(this)">Save</button></td>
+                    <td>
+                        <button type="button" class="btn btn-outline-success btn-sm export-btn"><i class="fas fa-file-excel"></i> Export</button>
+                    </td>                
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </form>
+
+    <a href="{% url 'export_all_users_excel' %}?year={{ year }}&month={{ month }}" class="btn btn-outline-success mb-3" target="_blank">
+        <i class="fas fa-file-excel"></i> Export All
+    </a>
+    
+</div>
+
+<script>
+    function getRowData(row) {
+        const cells = row.querySelectorAll('td');
+        return {
+            id: row.dataset.id,
+            first_name: cells[0].innerText,
+            last_name: cells[1].innerText,
+            username: cells[2].innerText,
+            email: cells[3].innerText,
+            position: cells[4].innerText,
+            team_lead: cells[5].innerText,
+            project_manager: cells[6].innerText,
+            project: cells[7].innerText,
+            vacation_days: cells[8].innerText,
+        };
+    }
+
+    function saveRow(button) {
+        const row = button.closest('tr');
+        const data = getRowData(row);
+
+        fetch("{% url 'save_user_data' %}", {
+            method: "POST",
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        }).then(response => {
+            if (response.ok) {
+                button.classList.remove('btn-success');
+                button.classList.add('btn-primary');
+                button.textContent = 'Save';
+                alert('Saved!');
+            } else {
+                alert('Error saving data.');
+            }
+        });
+    }
+
+    function addNewRow() {
+        const tbody = document.querySelector('#user-table tbody');
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true">0</td>
+            <td><button type="button" class="btn btn-success" onclick="saveRow(this)">Save</button></td>
+            <td><button type="button" class="btn btn-sm btn-secondary export-btn">Export</button></td>
+        `;
+        tbody.appendChild(row);
+
+        // Re-bind export button in new row
+        row.querySelector('.export-btn').addEventListener('click', handleExportClick);
+    }
+
+    function handleExportClick(event) {
+        event.preventDefault();
+        const row = event.target.closest('tr');
+        const userId = row.dataset.id;
+
+        // Prevent export if it's a newly added row (no ID yet)
+        if (!userId) {
+            alert("Please save the user first before exporting.");
+            return;
+        }
+
+        const year = '{{ year }}';
+        const month = '{{ month }}';
+        const url = `{% url 'export_user_excel' %}?user_id=${userId}&year=${year}&month=${month}`;
+        window.open(url, '_blank');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.export-btn').forEach(button => {
+            button.addEventListener('click', handleExportClick);
+        });
+    });
+</script>
+
+{% endblock %}
